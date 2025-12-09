@@ -29,3 +29,8 @@ kubectl apply -f k8s\applicants-api.yaml
 kubectl apply -f k8s\identity-api.yaml
 kubectl apply -f k8s\jobs-api.yaml
 kubectl apply -f k8s\web.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
+
+kubectl create secret tls web-home-tls --cert=https/web/web.home.crt --key=https/web/web.home.key -n chomage
+kubectl create secret tls rabbitmq-home-tls --cert=https/rabbitmq/rabbitmq.home.crt --key=https/rabbitmq/rabbitmq.home.key -n chomage
