@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: applicants-api
+  namespace: chomage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: applicants-api
+  template:
+    metadata:
+      labels:
+        app: applicants-api
+    spec:
+      containers:
+      - name: applicants-api
+        image: ffatih/applicants.api:1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        env:
+        - name: ConnectionStrings__DotNetGigs
+          value: "Server=sql.data;Database=dotnetgigs.applicants;User Id=sa;Password=Pass@word;TrustServerCertificate=true;"
+        - name: HostRabbitmq
+          value: "rabbitmq"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: applicants-api
+  namespace: chomage
+spec:
+  selector:
+    app: applicants-api
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
