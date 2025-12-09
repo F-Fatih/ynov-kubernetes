@@ -13,10 +13,22 @@ spec:
       labels:
         app: identity-api
     spec:
+      restartPolicy: Always
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - user
+              topologyKey: kubernetes.io/hostname
       containers:
       - name: identity-api
         image: ffatih/identity.api:1.0
-        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
         env:
@@ -24,6 +36,13 @@ spec:
           value: "user:6379"
         - name: HostRabbitmq
           value: "rabbitmq"
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "500Mi"
+          limits:
+            cpu: "1"
+            memory: "1500Mi"
 ---
 apiVersion: v1
 kind: Service
