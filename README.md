@@ -1,4 +1,4 @@
-docker build -t mssql-linux:1.0 -f Database/Dockerfile .
+docker build -t mssql-linux:1.0 -f /Database/Dockerfile .
 docker tag mssql-linux:1.0 ffatih/mssql-linux:1.0
 docker push ffatih/mssql-linux:1.0
 
