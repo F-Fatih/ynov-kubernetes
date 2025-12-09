@@ -20,8 +20,8 @@ spec:
         ports:
         - containerPort: 80
         env:
-        - name: ConnectionStrings__DotNetGigs
-          value: "Server=sql.data;Database=dotnetgigs.jobs;User Id=sa;Password=Pass@word;TrustServerCertificate=true;"
+        - name: ConnectionString
+          value: "Server=sql;Database=dotnetgigs.jobs;User Id=sa;Password=Pass@word;TrustServerCertificate=true;"
         - name: HostRabbitmq
           value: "rabbitmq"
 ---
