@@ -32,11 +32,9 @@ metadata:
   name: web
   namespace: chomage
 spec:
-  type: NodePort
   selector:
     app: web
   ports:
   - port: 80
     targetPort: 80
-    nodePort: 30800
     protocol: TCP
