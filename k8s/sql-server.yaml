@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sql-pvc
+  namespace: chomage
+spec:
+  storageClassName: "hostpath"
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sql
+  namespace: chomage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sql
+  template:
+    metadata:
+      labels:
+        app: sql
+    spec:
+      containers:
+      - name: mssql-linux
+        image: ffatih/mssql-linux:1.0
+        ports:
+        - containerPort: 1433
+        volumeMounts:
+        - name: mssql-data
+          mountPath: /var/opt/mssql
+      volumes:
+      - name: mssql-data
+        persistentVolumeClaim:
+          claimName: sql-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sql
+  namespace: chomage
+spec:
+  selector:
+    app: sql
+  ports:
+  - port: 1433
+    targetPort: 1433
+    protocol: TCP
+    name: mssql
