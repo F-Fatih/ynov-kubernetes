@@ -17,5 +17,15 @@ docker push ffatih/jobs.api:1.0
 
 docker build -t web:1.0 -f Web/Dockerfile .
 docker tag web:1.0 ffatih/web:1.0
-docker push ffatih/web:1.0*
+docker push ffatih/web:1.0
 ```
+
+kubectl delete deployment --all -n chomage
+
+kubectl apply -f k8s\sql-server.yaml
+kubectl apply -f k8s\redis.yaml
+kubectl apply -f k8s\rabbitmq.yaml
+kubectl apply -f k8s\applicants-api.yaml
+kubectl apply -f k8s\identity-api.yaml
+kubectl apply -f k8s\jobs-api.yaml
+kubectl apply -f k8s\web.yaml
