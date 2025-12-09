@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-api
+  namespace: chomage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-api
+  template:
+    metadata:
+      labels:
+        app: identity-api
+    spec:
+      containers:
+      - name: identity-api
+        image: ffatih/identity.api:1.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        env:
+        - name: RedisHost
+          value: "user:6379"
+        - name: HostRabbitmq
+          value: "rabbitmq"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: identity-api
+  namespace: chomage
+spec:
+  selector:
+    app: identity-api
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
