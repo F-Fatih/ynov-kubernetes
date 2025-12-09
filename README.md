@@ -1,4 +1,3 @@
-```
 ## Projet K8s – Build & Déploiement
 
 Guide rapide pour builder les images, les pousser sur Docker Hub, puis déployer l’environnement complet sur Kubernetes (namespace `chomage`).
