@@ -64,6 +64,8 @@ kubectl apply -f k8s\applicants-api.yaml
 kubectl apply -f k8s\identity-api.yaml
 kubectl apply -f k8s\jobs-api.yaml
 kubectl apply -f k8s\web.yaml
+kubectl apply -f k8s\hpa-applicants.yaml
+kubectl apply -f k8s\ingress.yaml
 ```
 
 4) Nettoyer toutes les deployments du namespace :
@@ -77,18 +79,42 @@ kubectl delete deployment --all -n chomage
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
 ```
 
-2) Créer les secrets TLS :
+2) Generation des certificats
+```bash
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout web.home.key -out web.home.crt -subj "/CN=web.home/O=home-lab"
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rabbitmq.home.key -out rabbitmq.home.crt -subj "/CN=rabbitmq.home/O=home-lab"
+```
+  
+3) Créer les secrets TLS :
 ```bash
 kubectl create secret tls web-home-tls --cert=https/web/web.home.crt --key=https/web/web.home.key -n chomage
 kubectl create secret tls rabbitmq-home-tls --cert=https/rabbitmq/rabbitmq.home.crt --key=https/rabbitmq/rabbitmq.home.key -n chomage
 ```
 
-### Workflow express
-- Build + push toutes les images (section ci-dessus)
-- `kubectl apply -f k8s\namespace-chomage.yaml`
-- Appliquer les manifests des services + APIs + web
-- Installer l’ingress NGINX puis créer les secrets TLS
-- Vérifier les ingress et les pods : `kubectl get ingress,pods,svc -n chomage`
+4) Ajout URL dans fichier Hosts :
+```bash
+127.0.0.1 web.home rabbitmq.home
+```
+
+5) URL d'accès :
+```bash
+https://web.home
+https://rabbitmq.home
+```
+
+### Scaling pods
+1) Lancement stress test
+
+```bash
+kubectl run load-tester -n chomage --image=alpine --restart=Never -- /bin/sh -c "apk add --no-cache curl >/dev/null 2>&1; while true; do curl -s http://web >/dev/null; done"
+kubectl get hpa -n chomage -w
+```
+
+2) Delete stress test
+
+```bash
+ kubectl delete pod load-tester -n chomage
+```
 
 ### Monitoring
 
@@ -116,3 +142,11 @@ Tester les métriques :
 kubectl top nodes
 kubectl top pods -A
 ```
+
+### Workflow express
+- Build + push toutes les images (section ci-dessus)
+- `kubectl apply -f k8s\namespace-chomage.yaml`
+- Appliquer les manifests des services + APIs + web
+- Installer l’ingress NGINX puis créer les secrets TLS
+- Vérifier les ingress et les pods : `kubectl get ingress,pods,svc -n chomage`
+

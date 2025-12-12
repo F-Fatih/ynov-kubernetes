@@ -13,10 +13,22 @@ spec:
       labels:
         app: applicants-api
     spec:
+      restartPolicy: Always
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - sql
+              topologyKey: kubernetes.io/hostname
       containers:
       - name: applicants-api
         image: ffatih/applicants.api:1.0
-        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
         env:
@@ -24,6 +36,13 @@ spec:
           value: "Server=sql.data;Database=dotnetgigs.applicants;User Id=sa;Password=Pass@word;TrustServerCertificate=true;"
         - name: HostRabbitmq
           value: "rabbitmq"
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "500Mi"
+          limits:
+            cpu: "1"
+            memory: "1500Mi"
 ---
 apiVersion: v1
 kind: Service
@@ -38,3 +57,23 @@ spec:
     targetPort: 80
     protocol: TCP
     name: http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: applicants-hpa
+  namespace: chomage
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: applicants-api
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
