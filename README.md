@@ -118,8 +118,10 @@ kubectl get hpa -n chomage -w
 
 ### Monitoring
 
-### installer Metrics Server
+Installer Metrics Server
+```bash
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
 
 Si le Pod ne tourne pas, modifier le deploiement (nécessaire pour Docker Desktop):
 
