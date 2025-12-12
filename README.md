@@ -64,6 +64,8 @@ kubectl apply -f k8s\applicants-api.yaml
 kubectl apply -f k8s\identity-api.yaml
 kubectl apply -f k8s\jobs-api.yaml
 kubectl apply -f k8s\web.yaml
+kubectl apply -f k8s\hpa-applicants.yaml
+kubectl apply -f k8s\ingress.yaml
 ```
 
 4) Nettoyer toutes les deployments du namespace :
@@ -83,9 +85,24 @@ kubectl create secret tls web-home-tls --cert=https/web/web.home.crt --key=https
 kubectl create secret tls rabbitmq-home-tls --cert=https/rabbitmq/rabbitmq.home.crt --key=https/rabbitmq/rabbitmq.home.key -n chomage
 ```
 
+### Scaling pods
+1) Lancement stress test
+
+```bash
+kubectl run load-tester -n chomage --image=alpine --restart=Never -- /bin/sh -c "apk add --no-cache curl >/dev/null 2>&1; while true; do curl -s http://web >/dev/null; done"
+kubectl get hpa -n chomage -w
+```
+
+2) Delete stress test
+
+```bash
+ kubectl delete pod load-tester -n chomage
+```
+
 ### Workflow express
 - Build + push toutes les images (section ci-dessus)
 - `kubectl apply -f k8s\namespace-chomage.yaml`
 - Appliquer les manifests des services + APIs + web
 - Installer l’ingress NGINX puis créer les secrets TLS
 - Vérifier les ingress et les pods : `kubectl get ingress,pods,svc -n chomage`
+
