@@ -116,6 +116,33 @@ kubectl get hpa -n chomage -w
  kubectl delete pod load-tester -n chomage
 ```
 
+### Monitoring
+
+installer Metrics Server
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+Si le Pod ne tourne pas, modifier le deploiement (nécessaire pour Docker Desktop):
+
+```bash
+kubectl edit deployment metrics-server -n kube-system
+```
+Ajouter en args :
+
+- --kubelet-insecure-tls
+- --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+
+Re-démarrez le Pod
+Vérifiez que le pod tourne : 
+```bash
+kubectl get pods -n kube-system | grep metrics-server
+```
+
+Tester les métriques :
+```bash
+kubectl top nodes
+kubectl top pods -A
+```
+
 ### Workflow express
 - Build + push toutes les images (section ci-dessus)
 - `kubectl apply -f k8s\namespace-chomage.yaml`
