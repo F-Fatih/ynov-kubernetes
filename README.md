@@ -85,6 +85,17 @@ kubectl create secret tls web-home-tls --cert=https/web/web.home.crt --key=https
 kubectl create secret tls rabbitmq-home-tls --cert=https/rabbitmq/rabbitmq.home.crt --key=https/rabbitmq/rabbitmq.home.key -n chomage
 ```
 
+3) Ajout URL dans fichier Hosts :
+```bash
+127.0.0.1 web.home rabbitmq.home
+```
+
+3) URL d'accès :
+```bash
+https://web.home
+https://rabbitmq.home
+```
+
 ### Scaling pods
 1) Lancement stress test
 
