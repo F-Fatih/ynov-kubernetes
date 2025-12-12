@@ -81,7 +81,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main
 
 2) Generation des certificats
 ```bash
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout web.home.key -out web.home.crt -subj "/CN=web.home/O=home-lab
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout web.home.key -out web.home.crt -subj "/CN=web.home/O=home-lab"
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rabbitmq.home.key -out rabbitmq.home.crt -subj "/CN=rabbitmq.home/O=home-lab"
 ```
   
