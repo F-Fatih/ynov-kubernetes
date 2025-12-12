@@ -79,18 +79,24 @@ kubectl delete deployment --all -n chomage
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/cloud/deploy.yaml
 ```
 
-2) Créer les secrets TLS :
+2) Generation des certificats
+```bash
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout web.home.key -out web.home.crt -subj "/CN=web.home/O=home-lab
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rabbitmq.home.key -out rabbitmq.home.crt -subj "/CN=rabbitmq.home/O=home-lab"
+```
+  
+3) Créer les secrets TLS :
 ```bash
 kubectl create secret tls web-home-tls --cert=https/web/web.home.crt --key=https/web/web.home.key -n chomage
 kubectl create secret tls rabbitmq-home-tls --cert=https/rabbitmq/rabbitmq.home.crt --key=https/rabbitmq/rabbitmq.home.key -n chomage
 ```
 
-3) Ajout URL dans fichier Hosts :
+4) Ajout URL dans fichier Hosts :
 ```bash
 127.0.0.1 web.home rabbitmq.home
 ```
 
-3) URL d'accès :
+5) URL d'accès :
 ```bash
 https://web.home
 https://rabbitmq.home
