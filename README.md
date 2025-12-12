@@ -89,3 +89,30 @@ kubectl create secret tls rabbitmq-home-tls --cert=https/rabbitmq/rabbitmq.home.
 - Appliquer les manifests des services + APIs + web
 - Installer l’ingress NGINX puis créer les secrets TLS
 - Vérifier les ingress et les pods : `kubectl get ingress,pods,svc -n chomage`
+
+### Monitoring
+
+installer Metrics Server
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+Si le Pod ne tourne pas, modifier le deploiement (nécessaire pour Docker Desktop):
+
+```bash
+kubectl edit deployment metrics-server -n kube-system
+```
+Ajouter en args :
+
+- --kubelet-insecure-tls
+- --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+
+Re-démarrez le Pod
+Vérifiez que le pod tourne : 
+```bash
+kubectl get pods -n kube-system | grep metrics-server
+```
+
+Tester les métriques :
+```bash
+kubectl top nodes
+kubectl top pods -A
+```
