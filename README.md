@@ -161,6 +161,14 @@ kubectl port-forward -n kube-system svc/kube-state-metrics 8080:8080
 ```
 Puis lors d'un curl ou navigateur voir : http://localhost:8080/metrics
 
+### Monitoring : Prometheus & Grafana
+```bash
+kubectl apply -f k8s\monitoring
+```
+
+Accès Prometheus : http://localhost:30090/
+Accès Grafana :http://localhost:30300/   ( Login: admin / admin )
+
 
 ### Workflow express
 - Build + push toutes les images (section ci-dessus)
