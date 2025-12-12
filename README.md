@@ -145,6 +145,23 @@ kubectl top nodes
 kubectl top pods -A
 ```
 
+### Installer Kube-State-Metrics
+```bash
+helm install kube-state-metrics prometheus-community/kube-state-metrics -n kube-system
+```
+
+Vérifier le fonctionnement :
+```bash
+kubectl get pods -n kube-system | grep kube-state-metrics
+```
+
+Pour vérifier le scrap sans prometheus :
+```bash
+kubectl port-forward -n kube-system svc/kube-state-metrics 8080:8080
+```
+Puis lors d'un curl ou navigateur voir : http://localhost:8080/metrics
+
+
 ### Workflow express
 - Build + push toutes les images (section ci-dessus)
 - `kubectl apply -f k8s\namespace-chomage.yaml`
