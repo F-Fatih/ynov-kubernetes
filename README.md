@@ -73,6 +73,12 @@ kubectl apply -f k8s\ingress.yaml
 kubectl delete deployment --all -n chomage
 ```
 
+### Déploiement HELM
+```bash
+helm lint helm/app
+helm template app helm/app -n chomage
+helm upgrade --install app helm/app -n chomage --create-namespace```
+
 ### Ingress & TLS
 1) Installer l’Ingress controller NGINX :
 ```bash
