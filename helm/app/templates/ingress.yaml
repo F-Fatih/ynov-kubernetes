@@ -9,10 +9,10 @@ spec:
   ingressClassName: {{ .Values.ingress.className }}
   tls:
   - hosts:
-    - {{ .Values.ingress.className }}
+    - {{ .Values.ingress.webHost }}
     secretName: {{ .Values.ingress.webTlsSecret }}
   rules:
-  - host: {{ .Values.ingress.className }}
+  - host: {{ .Values.ingress.webHost }}
     http:
       paths:
       - path: /
