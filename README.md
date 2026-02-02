@@ -147,6 +147,7 @@ kubectl top pods -A
 
 ### Installer Kube-State-Metrics
 ```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm install kube-state-metrics prometheus-community/kube-state-metrics -n kube-system
 ```
 
