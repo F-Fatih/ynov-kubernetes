@@ -1,4 +1,4 @@
-# 📚 Stack EFK (Elasticsearch, Fluentd, Kibana) pour Kubernetes
+# Stack EFK (Elasticsearch, Fluentd, Kibana) pour Kubernetes
 
 ```
           $$$$$$\  $$\  $$$$$$\            
@@ -11,7 +11,7 @@ $$$$$$$$\\$$$$$$  |$$ |\$$$$$$  /$$$$$$$  |
 \________|\______/ \__| \______/ \_______/
 ```
 
-## 🎯 Qu'est-ce que c'est ?
+## Qu'est-ce que c'est ?
 
 Une stack complète de logging qui collecte, stocke et visualise **automatiquement** les logs de **TOUS les conteneurs** de **TOUS les namespaces** de votre cluster Kubernetes.
 
