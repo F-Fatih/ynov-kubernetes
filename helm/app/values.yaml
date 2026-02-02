@@ -1,0 +1,18 @@
+namespace: chomage
+
+images:
+  web: ffatih/web:1.0
+  applicantsApi: ffatih/applicants.api:1.0
+  jobsApi: ffatih/jobs.api:1.0
+  identityApi: ffatih/identity.api:1.0
+  sql: ffatih/mssql-linux:1.0
+  redis: redis:7-alpine
+  rabbitmq: rabbitmq:3-management
+
+ingress:
+  className: nginx
+  webHost: web.home
+  rabbitmqHost: rabbitmq.home
+  webTlsSecret: web-home-tls
+  rabbitmqTlsSecret: rabbitmq-home-tls
+

@@ -22,13 +22,13 @@ services:
     - 8080:80
     container_name: web
     depends_on:
-      - applicants.api
-      - identity.api
-      - jobs.api
+      - applicants-api
+      - identity-api
+      - jobs-api
     restart: always
 
-  applicants.api:
-    image: applicants.api
+  applicants-api:
+    image: applicants-api
     environment:
       - ConnectionString=Server=sql.data;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;
       - HostRabbitmq=rabbitmq
@@ -37,14 +37,14 @@ services:
       dockerfile: Services/Applicants.Api/Dockerfile
     ports: 
     - 8081:80
-    container_name: applicants.api
+    container_name: applicants-api
     depends_on:
       - sql.data
       - rabbitmq
     restart: always
 
-  jobs.api:
-    image: jobs.api
+  jobs-api:
+    image: jobs-api
     environment:
       - ConnectionString=Server=sql.data;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;
       - HostRabbitmq=rabbitmq 
@@ -53,14 +53,14 @@ services:
       dockerfile: Services/Jobs.Api/Dockerfile
     ports: 
     - 8083:80
-    container_name: jobs.api
+    container_name: jobs-api
     depends_on:
       - sql.data
       - rabbitmq
     restart: always
 
-  identity.api:
-    image: identity.api
+  identity-api:
+    image: identity-api
     environment:
       - RedisHost=user.data:6379
       - HostRabbitmq=rabbitmq
@@ -69,7 +69,7 @@ services:
       dockerfile: Services/Identity.Api/Dockerfile
     ports: 
     - 8084:80
-    container_name: identity.api
+    container_name: identity-api
     depends_on:
       - user.data
       - rabbitmq       

@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: identity-api
-  namespace: chomage
+  name: jobs-api
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: identity-api
+      app: jobs-api
   template:
     metadata:
       labels:
-        app: identity-api
+        app: jobs-api
     spec:
       restartPolicy: Always
       affinity:
@@ -24,16 +24,16 @@ spec:
                 - key: app
                   operator: In
                   values:
-                  - user
+                  - sql
               topologyKey: kubernetes.io/hostname
       containers:
-      - name: identity-api
-        image: ffatih/identity.api:1.0
+      - name: jobs-api
+        image:  {{ .Values.images.jobsApi }}
         ports:
         - containerPort: 80
         env:
-        - name: RedisHost
-          value: "user:6379"
+        - name: ConnectionString
+          value: "Server=sql;Database=dotnetgigs.jobs;User Id=sa;Password=Pass@word;TrustServerCertificate=true;"
         - name: HostRabbitmq
           value: "rabbitmq"
         resources:
@@ -47,11 +47,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: identity-api
-  namespace: chomage
+  name: jobs-api
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
-    app: identity-api
+    app: jobs-api
   ports:
   - port: 80
     targetPort: 80
