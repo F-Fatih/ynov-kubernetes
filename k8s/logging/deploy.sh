@@ -28,13 +28,13 @@ NC='\033[0m' # No Color
 
 # Vérifier que kubectl est installé
 if ! command -v kubectl &> /dev/null; then
-    echo -e "${RED}❌ kubectl n'est pas installé${NC}"
+    echo -e "${RED} kubectl n'est pas installé${NC}"
     exit 1
 fi
 
 # Vérifier la connexion au cluster
 if ! kubectl cluster-info &> /dev/null; then
-    echo -e "${RED}❌ Impossible de se connecter au cluster Kubernetes${NC}"
+    echo -e "${RED} Impossible de se connecter au cluster Kubernetes${NC}"
     exit 1
 fi
 
@@ -42,27 +42,27 @@ echo -e "${GREEN}✓${NC} Connecté au cluster Kubernetes"
 echo ""
 
 # Créer le namespace
-echo "📦 Création du namespace 'logging'..."
+echo "Création du namespace 'logging'..."
 kubectl apply -f 00-namespace.yaml
 
 echo ""
-echo "🔍 Déploiement d'Elasticsearch..."
+echo "Déploiement d'Elasticsearch..."
 kubectl apply -f 01-elasticsearch.yaml
 
 echo ""
-echo "📊 Déploiement de Kibana..."
+echo "Déploiement de Kibana..."
 kubectl apply -f 02-kibana.yaml
 
 echo ""
-echo "🔐 Configuration RBAC pour Fluentd..."
+echo "Configuration RBAC pour Fluentd..."
 kubectl apply -f 03-fluentd-rbac.yaml
 
 echo ""
-echo "⚙️  Configuration de Fluentd..."
+echo "Configuration de Fluentd..."
 kubectl apply -f 04-fluentd-configmap.yaml
 
 echo ""
-echo "📝 Déploiement de Fluentd (DaemonSet)..."
+echo "Déploiement de Fluentd (DaemonSet)..."
 kubectl apply -f 05-fluentd-daemonset.yaml
 
 echo ""
@@ -72,9 +72,9 @@ echo "==================================================="
 echo ""
 
 # Attendre Elasticsearch
-echo "⏳ Attente d'Elasticsearch (peut prendre 2-3 minutes)..."
+echo "Attente d'Elasticsearch (peut prendre 2-3 minutes)..."
 kubectl wait --for=condition=ready pod -l app=elasticsearch -n logging --timeout=300s || {
-    echo -e "${RED}❌ Elasticsearch n'a pas démarré correctement${NC}"
+    echo -e "${RED}Elasticsearch n'a pas démarré correctement${NC}"
     echo "Logs Elasticsearch :"
     kubectl logs -n logging -l app=elasticsearch --tail=50
     exit 1
@@ -83,9 +83,9 @@ echo -e "${GREEN}✓${NC} Elasticsearch est prêt"
 
 # Attendre Kibana
 echo ""
-echo "⏳ Attente de Kibana..."
+echo "Attente de Kibana..."
 kubectl wait --for=condition=ready pod -l app=kibana -n logging --timeout=300s || {
-    echo -e "${RED}❌ Kibana n'a pas démarré correctement${NC}"
+    echo -e "${RED}Kibana n'a pas démarré correctement${NC}"
     echo "Logs Kibana :"
     kubectl logs -n logging -l app=kibana --tail=50
     exit 1
@@ -94,7 +94,7 @@ echo -e "${GREEN}✓${NC} Kibana est prêt"
 
 # Vérifier Fluentd
 echo ""
-echo "⏳ Vérification de Fluentd..."
+echo "Vérification de Fluentd..."
 sleep 10
 FLUENTD_READY=$(kubectl get daemonset -n logging fluentd -o jsonpath='{.status.numberReady}')
 FLUENTD_DESIRED=$(kubectl get daemonset -n logging fluentd -o jsonpath='{.status.desiredNumberScheduled}')
@@ -108,7 +108,7 @@ fi
 
 echo ""
 echo "==================================================="
-echo -e "${GREEN}✅ Déploiement terminé avec succès !${NC}"
+echo -e "${GREEN}Déploiement terminé avec succès !${NC}"
 echo "==================================================="
 echo ""
 
@@ -140,7 +140,7 @@ echo "   kubectl port-forward -n logging svc/kibana 5601:5601"
 echo "   Puis accédez à http://localhost:5601"
 echo ""
 
-echo "📝 Prochaines étapes dans Kibana :"
+echo "Prochaines étapes dans Kibana :"
 echo ""
 echo "   1. Allez dans Management → Stack Management → Index Patterns"
 echo "   2. Créez un index pattern avec : logstash-*"
@@ -163,5 +163,5 @@ echo "   # Voir les index créés"
 echo "   kubectl exec -n logging elasticsearch-0 -- curl -s http://localhost:9200/_cat/indices?v"
 echo ""
 
-echo "📚 Consultez le README.md pour plus d'informations"
+echo "Consultez le README.md pour plus d'informations"
 echo ""
