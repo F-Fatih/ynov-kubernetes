@@ -82,7 +82,7 @@ kubectl exec -n logging elasticsearch-0 -- curl -s -X GET "http://localhost:9200
 }'
 ```
 
-## 🌐 Accéder à Kibana
+## Accéder à Kibana
 
 Une fois le déploiement terminé, vous devez accéder à l'interface Kibana.
 
