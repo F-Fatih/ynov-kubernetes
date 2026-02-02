@@ -198,7 +198,7 @@ NOT kubernetes.namespace_name: "kube-system"
 NOT kubernetes.namespace_name: ("kube-system" OR "kube-public" OR "logging")
 ```
 
-## 📊 Exemples pratiques
+## Exemples pratiques
 
 ### Voir les logs d'une application spécifique
 
