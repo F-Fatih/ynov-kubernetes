@@ -13,6 +13,7 @@ spec:
       labels:
         app: identity-api
     spec:
+      serviceAccountName: identity-sa
       restartPolicy: Always
       affinity:
         podAffinity:
