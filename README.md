@@ -108,7 +108,7 @@ kubectl create secret tls rabbitmq-home-tls --cert=https/rabbitmq/rabbitmq.home.
 5) URL d'accès :
 ```bash
 https://web.home
-https://rabbitmq.home
+https://rabbitmq.home (login : guest / guest)
 ```
 
 ### Scaling pods
