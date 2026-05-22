@@ -1,18 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: applicants-api
-  namespace: chomage
+  name: identity-api
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: applicants-api
+      app: identity-api
   template:
     metadata:
       labels:
-        app: applicants-api
+        app: identity-api
     spec:
+      serviceAccountName: identity-sa
       restartPolicy: Always
       affinity:
         podAffinity:
@@ -24,16 +25,16 @@ spec:
                 - key: app
                   operator: In
                   values:
-                  - sql
+                  - user
               topologyKey: kubernetes.io/hostname
       containers:
-      - name: applicants-api
-        image: ffatih/applicants.api:1.0
+      - name: identity-api
+        image:  {{ .Values.images.identityApi }}
         ports:
         - containerPort: 80
         env:
-        - name: ConnectionStrings__DotNetGigs
-          value: "Server=sql.data;Database=dotnetgigs.applicants;User Id=sa;Password=Pass@word;TrustServerCertificate=true;"
+        - name: RedisHost
+          value: "user:6379"
         - name: HostRabbitmq
           value: "rabbitmq"
         resources:
@@ -47,33 +48,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: applicants-api
-  namespace: chomage
+  name: identity-api
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
-    app: applicants-api
+    app: identity-api
   ports:
   - port: 80
     targetPort: 80
     protocol: TCP
     name: http
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: applicants-hpa
-  namespace: chomage
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: applicants-api
-  minReplicas: 1
-  maxReplicas: 5
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 50

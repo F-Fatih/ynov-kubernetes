@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jobs-api
-  namespace: chomage
+  name: applicants-api
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: jobs-api
+      app: applicants-api
   template:
     metadata:
       labels:
-        app: jobs-api
+        app: applicants-api
     spec:
       restartPolicy: Always
       affinity:
@@ -27,13 +27,13 @@ spec:
                   - sql
               topologyKey: kubernetes.io/hostname
       containers:
-      - name: jobs-api
-        image: ffatih/jobs.api:1.0
+      - name: applicants-api
+        image:  {{ .Values.images.applicantsApi }}
         ports:
         - containerPort: 80
         env:
-        - name: ConnectionString
-          value: "Server=sql;Database=dotnetgigs.jobs;User Id=sa;Password=Pass@word;TrustServerCertificate=true;"
+        - name: ConnectionStrings__DotNetGigs
+          value: "Server=sql.data;Database=dotnetgigs.applicants;User Id=sa;Password=Pass@word;TrustServerCertificate=true;"
         - name: HostRabbitmq
           value: "rabbitmq"
         resources:
@@ -47,13 +47,33 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: jobs-api
-  namespace: chomage
+  name: applicants-api
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
-    app: jobs-api
+    app: applicants-api
   ports:
   - port: 80
     targetPort: 80
     protocol: TCP
     name: http
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: applicants-hpa
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: applicants-api
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50

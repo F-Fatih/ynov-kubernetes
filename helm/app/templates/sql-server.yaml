@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: sql-pvc
-  namespace: chomage
+  namespace: {{ .Release.Namespace }}
 spec:
   storageClassName: "hostpath"
   accessModes:
@@ -15,7 +15,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: sql
-  namespace: chomage
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
       - name: mssql-linux
-        image: ffatih/mssql-linux:1.0
+        image:  {{ .Values.images.sql }}
         ports:
         - containerPort: 1433
         volumeMounts:
@@ -43,7 +43,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sql
-  namespace: chomage
+  namespace: {{ .Release.Namespace }}
 spec:
   selector:
     app: sql

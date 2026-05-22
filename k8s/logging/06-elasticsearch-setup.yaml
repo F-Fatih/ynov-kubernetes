@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: elasticsearch-setup
+  namespace: logging
+  labels:
+    app: elasticsearch-setup
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-elasticsearch
+          image: curlimages/curl:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Attente d'Elasticsearch..."
+              until curl -sf http://elasticsearch.logging.svc.cluster.local:9200/_cluster/health \
+                | grep -qE '"status":"(green|yellow)"'; do
+                echo "ES pas encore prêt, retry dans 5s..."
+                sleep 5
+              done
+              echo "Elasticsearch est prêt !"
+      containers:
+        - name: setup
+          image: curlimages/curl:latest
+          command:
+            - sh
+            - -c
+            - |
+              ES="http://elasticsearch.logging.svc.cluster.local:9200"
+              set -e
+
+              echo "=== 1/3 Politique ILM ==="
+              curl -sf -X PUT "${ES}/_ilm/policy/logstash-cleanup" \
+                -H "Content-Type: application/json" \
+                -d '{"policy":{"phases":{"hot":{"min_age":"0ms","actions":{"rollover":{"max_age":"1d","max_size":"500mb"}}},"delete":{"min_age":"2d","actions":{"delete":{}}}}}}' \
+                && echo " OK"
+
+              echo "=== 2/3 Template d index ==="
+              curl -sf -X PUT "${ES}/_index_template/logstash-template" \
+                -H "Content-Type: application/json" \
+                -d '{"index_patterns":["logstash-*"],"template":{"settings":{"index.lifecycle.name":"logstash-cleanup","number_of_replicas":"0","index.refresh_interval":"30s"}},"priority":100}' \
+                && echo " OK"
+
+              echo "=== 3/3 Application aux index existants ==="
+              curl -sf -X PUT "${ES}/logstash-*/_settings" \
+                -H "Content-Type: application/json" \
+                -d '{"index":{"lifecycle.name":"logstash-cleanup","number_of_replicas":"0","refresh_interval":"30s"}}' \
+                && echo " OK"
+
+              echo "=== Resultat final ==="
+              curl -sf "${ES}/_cat/indices/logstash-*?v&h=index,docs.count,store.size,ilm.policy"
+              echo "Setup ILM termine !"

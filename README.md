@@ -45,7 +45,7 @@ docker tag web:1.0 ffatih/web:1.0
 docker push ffatih/web:1.0
 ```
 
-### Déploiement Kubernetes
+### Déploiement Kubernetes /!\ L'install VIA Helm est disponible !!! /!\
 1) Créer le namespace :
 ```bash
 kubectl apply -f k8s\namespace-chomage.yaml
@@ -73,6 +73,13 @@ kubectl apply -f k8s\ingress.yaml
 kubectl delete deployment --all -n chomage
 ```
 
+### Déploiement HELM
+```bash
+helm lint helm/app
+helm template app helm/app -n chomage
+helm upgrade --install app helm/app -n chomage --create-namespace
+```
+
 ### Ingress & TLS
 1) Installer l’Ingress controller NGINX :
 ```bash
@@ -82,6 +89,8 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main
 2) Generation des certificats
 ```bash
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout web.home.key -out web.home.crt -subj "/CN=web.home/O=home-lab"
+```
+```
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rabbitmq.home.key -out rabbitmq.home.crt -subj "/CN=rabbitmq.home/O=home-lab"
 ```
   
@@ -99,21 +108,7 @@ kubectl create secret tls rabbitmq-home-tls --cert=https/rabbitmq/rabbitmq.home.
 5) URL d'accès :
 ```bash
 https://web.home
-https://rabbitmq.home
-```
-
-### Scaling pods
-1) Lancement stress test
-
-```bash
-kubectl run load-tester -n chomage --image=alpine --restart=Never -- /bin/sh -c "apk add --no-cache curl >/dev/null 2>&1; while true; do curl -s http://web >/dev/null; done"
-kubectl get hpa -n chomage -w
-```
-
-2) Delete stress test
-
-```bash
- kubectl delete pod load-tester -n chomage
+https://rabbitmq.home (login : guest / guest)
 ```
 
 ### Monitoring
@@ -169,6 +164,22 @@ kubectl apply -f k8s\monitoring
 
 Accès Prometheus : http://localhost:30090/
 Accès Grafana :http://localhost:30300/   ( Login: admin / admin )
+
+### Logging : Voir dossier logging
+
+### Scaling pods
+1) Lancement stress test
+
+```bash
+kubectl run load-tester -n chomage --image=alpine --restart=Never -- /bin/sh -c "apk add --no-cache curl >/dev/null 2>&1; while true; do curl -s http://web >/dev/null; done"
+kubectl get hpa -n chomage -w
+```
+
+2) Delete stress test
+
+```bash
+ kubectl delete pod load-tester -n chomage
+```
 
 
 ### Workflow express

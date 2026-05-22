@@ -2,17 +2,17 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: web-ingress
-  namespace: chomage
+  namespace: {{ .Release.Namespace }}
   annotations:
     kubernetes.io/ingress.class: nginx
 spec:
-  ingressClassName: nginx
+  ingressClassName: {{ .Values.ingress.className }}
   tls:
   - hosts:
-    - web.home
-    secretName: web-home-tls
+    - {{ .Values.ingress.webHost }}
+    secretName: {{ .Values.ingress.webTlsSecret }}
   rules:
-  - host: web.home
+  - host: {{ .Values.ingress.webHost }}
     http:
       paths:
       - path: /
@@ -27,17 +27,17 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: rabbitmq-ingress
-  namespace: chomage
+  namespace: {{ .Release.Namespace }}
   annotations:
     kubernetes.io/ingress.class: nginx
 spec:
-  ingressClassName: nginx
+  ingressClassName: {{ .Values.ingress.className }}
   tls:
   - hosts:
-    - rabbitmq.home
-    secretName: rabbitmq-home-tls
+    - {{ .Values.ingress.rabbitmqHost }}
+    secretName: {{ .Values.ingress.rabbitmqTlsSecret }}
   rules:
-  - host: rabbitmq.home
+  - host: {{ .Values.ingress.rabbitmqHost }}
     http:
       paths:
       - path: /
