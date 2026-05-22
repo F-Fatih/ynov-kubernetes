@@ -111,20 +111,6 @@ https://web.home
 https://rabbitmq.home (login : guest / guest)
 ```
 
-### Scaling pods
-1) Lancement stress test
-
-```bash
-kubectl run load-tester -n chomage --image=alpine --restart=Never -- /bin/sh -c "apk add --no-cache curl >/dev/null 2>&1; while true; do curl -s http://web >/dev/null; done"
-kubectl get hpa -n chomage -w
-```
-
-2) Delete stress test
-
-```bash
- kubectl delete pod load-tester -n chomage
-```
-
 ### Monitoring
 
 Installer Metrics Server
@@ -180,6 +166,20 @@ Accès Prometheus : http://localhost:30090/
 Accès Grafana :http://localhost:30300/   ( Login: admin / admin )
 
 ### Logging : Voir dossier logging
+
+### Scaling pods
+1) Lancement stress test
+
+```bash
+kubectl run load-tester -n chomage --image=alpine --restart=Never -- /bin/sh -c "apk add --no-cache curl >/dev/null 2>&1; while true; do curl -s http://web >/dev/null; done"
+kubectl get hpa -n chomage -w
+```
+
+2) Delete stress test
+
+```bash
+ kubectl delete pod load-tester -n chomage
+```
 
 
 ### Workflow express
