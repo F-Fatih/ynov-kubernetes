@@ -43,8 +43,11 @@ spec:
             value: /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/
           - name: CLUSTER_NAME
             value: "kubernetes"
+          - name: TZ
+            value: "Europe/Paris"
         resources:
           limits:
+            cpu: 500m
             memory: 512Mi
           requests:
             cpu: 100m

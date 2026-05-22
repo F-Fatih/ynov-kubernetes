@@ -5,35 +5,33 @@ metadata:
   namespace: logging
 data:
   fluent.conf: |
-    # Ignore fluentd's own logs
     <match fluent.**>
       @type null
     </match>
 
-    # HTTP input for internal metrics
     <source>
       @type http
       port 9880
       bind 0.0.0.0
     </source>
 
-    # Collect logs from Kubernetes pods across all namespaces
     <source>
       @type tail
       @id in_tail_container_logs
       path /var/log/containers/*.log
+      exclude_path ["/var/log/containers/fluentd*", "/var/log/containers/elasticsearch*", "/var/log/containers/kibana*"]
       pos_file /var/log/fluentd-containers.log.pos
       tag kubernetes.*
       read_from_head true
       <parse>
         @type json
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
+        time_format %Y-%m-%dT%H:%M:%S.%N%z
         time_key time
         keep_time_key true
+        localtime true
       </parse>
     </source>
 
-    # Enrich logs with Kubernetes metadata
     <filter kubernetes.**>
       @type kubernetes_metadata
       @id filter_kube_metadata
@@ -46,7 +44,6 @@ data:
       skip_namespace_metadata "#{ENV['FLUENT_KUBERNETES_METADATA_SKIP_NAMESPACE_METADATA'] || 'false'}"
     </filter>
 
-    # Parse JSON logs
     <filter kubernetes.**>
       @type parser
       key_name log
@@ -57,7 +54,6 @@ data:
       </parse>
     </filter>
 
-    # Remove unnecessary fields
     <filter kubernetes.**>
       @type record_transformer
       enable_ruby true
@@ -67,7 +63,6 @@ data:
       remove_keys $.docker.container_id
     </filter>
 
-    # Send logs to Elasticsearch
     <match kubernetes.**>
       @type elasticsearch
       @id out_es
@@ -82,14 +77,13 @@ data:
       logstash_dateformat %Y.%m.%d
       include_timestamp true
       type_name _doc
-      
       <buffer>
         @type file
         path /var/log/fluentd-buffers/kubernetes.system.buffer
         flush_mode interval
         retry_type exponential_backoff
-        flush_thread_count 2
-        flush_interval 5s
+        flush_thread_count 1
+        flush_interval 10s
         retry_forever false
         retry_max_interval 30
         chunk_limit_size 2M
