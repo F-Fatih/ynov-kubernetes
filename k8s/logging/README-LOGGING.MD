@@ -13,7 +13,9 @@ $$$$$$$$\\$$$$$$  |$$ |\$$$$$$  /$$$$$$$  |
 
 ## Qu'est-ce que c'est ?
 
-Une stack complète de logging qui collecte, stocke et visualise **automatiquement** les logs de **TOUS les conteneurs** de **TOUS les namespaces** de votre cluster Kubernetes.
+Une stack complète de logging qui collecte, stocke et visualise automatiquement les logs de tous les conteneurs de tous les namespaces de votre cluster Kubernetes.
+
+> **Note** : les logs internes de la stack EFK elle-même (fluentd, elasticsearch, kibana) sont exclus de la collecte pour éviter les boucles de rétroaction.
 
 ### Architecture
 
@@ -24,210 +26,194 @@ Une stack complète de logging qui collecte, stocke et visualise **automatiqueme
 ### Comment ça fonctionne ?
 
 1. **Fluentd** tourne sur **chaque nœud** de votre cluster (DaemonSet)
-2. Il lit les logs de **tous les conteneurs** dans `/var/log/containers/`
+2. Il lit les logs de **tous les conteneurs** dans `/var/log/containers/` (hors stack EFK)
 3. Il enrichit chaque log avec les métadonnées Kubernetes (namespace, pod, labels, etc.)
 4. Il envoie tout à **Elasticsearch** qui indexe et stocke les logs
 5. Vous visualisez tout ça dans **Kibana** avec une interface web puissante
+
+---
 
 ## Prérequis
 
 - Cluster Kubernetes fonctionnel (v1.19+)
 - `kubectl` configuré et connecté au cluster
 - StorageClass disponible pour les PersistentVolumes
-- Au moins **4 Go de RAM** disponible sur les nœuds
-- Accès aux images Docker publiques (docker.elastic.co, fluent)
+- Au moins **8 Go de RAM** disponible sur les nœuds (**16 Go recommandé**)
+- Accès aux images Docker publiques (docker.elastic.co, fluent, curlimages)
+
+### Sur Docker Desktop (WSL2)
+
+La RAM est gérée par Windows. Créez ou éditez `C:\Users\<VotreNom>\.wslconfig` :
+
+```ini
+[wsl2]
+memory=16GB
+processors=4
+swap=2GB
+```
+
+Puis redémarrez WSL2 :
+
+```powershell
+wsl --shutdown
+```
+
+---
 
 ## Installation
 
 ```bash
-# Rendre le script exécutable
 chmod +x deploy.sh
-
-# Lancer l'installation
 ./deploy.sh
 ```
 
 Le script va :
 - ✅ Vérifier les prérequis
 - ✅ Déployer tous les composants
-- ✅ Attendre que tout soit prêt
+- ✅ Attendre qu'Elasticsearch soit prêt
+- ✅ Configurer la rétention automatique des logs (ILM)
+- ✅ Déployer Kibana et Fluentd
 - ✅ Afficher les informations de connexion
 
-**Temps d'installation** : variable
+**Temps d'installation** : 3 à 5 minutes selon les ressources disponibles.
 
 ```bash
-# Voir tous les pods
-kubectl get pods -n logging
+# Suivre l'état des pods
+kubectl get pods -n logging -w
 ```
 
-### Vérifier la collecte des logs
+---
+
+## Rétention automatique des logs
+
+La stack configure automatiquement une politique ILM (Index Lifecycle Management) via le Job `06-elasticsearch-setup.yaml` :
+
+| Règle | Valeur |
+|---|---|
+| Suppression automatique | après **2 jours** |
+| Rollover (nouvel index) | à **500 MB** ou **1 jour** |
+| Réplication | 0 (single-node) |
+| Refresh interval | 30s |
+
+Pour vérifier la politique en place :
 
 ```bash
-kubectl exec -n logging elasticsearch-0 -- curl -s "http://localhost:9200/_cat/indices?v" | grep logstash
+kubectl exec -n logging elasticsearch-0 -- \
+  curl -s "http://localhost:9200/_cat/indices/logstash-*?v&h=index,docs.count,store.size,ilm.policy"
+```
+
+---
+
+## Vérifier la collecte des logs
+
+```bash
+kubectl exec -n logging elasticsearch-0 -- \
+  curl -s "http://localhost:9200/_cat/indices?v" | grep logstash
 ```
 
 ### Vérifier les namespaces collectés
 
 ```bash
-kubectl exec -n logging elasticsearch-0 -- curl -s -X GET "http://localhost:9200/logstash-*/_search?size=0&pretty" -H 'Content-Type: application/json' -d'
-{
-  "aggs": {
-    "namespaces": {
-      "terms": {
-        "field": "kubernetes.namespace_name.keyword",
-        "size": 50
+kubectl exec -n logging elasticsearch-0 -- curl -s -X GET \
+  "http://localhost:9200/logstash-*/_search?size=0&pretty" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "aggs": {
+      "namespaces": {
+        "terms": {
+          "field": "kubernetes.namespace_name.keyword",
+          "size": 50
+        }
       }
     }
-  }
-}'
+  }'
 ```
 
-## Accéder à Kibana
+---
 
-Une fois le déploiement terminé, vous devez accéder à l'interface Kibana.
+## Accéder à Kibana
 
 ### Via Port-Forward (recommandé pour les tests locaux)
 
 ```bash
-# Créer un tunnel vers Kibana
 kubectl port-forward -n logging svc/kibana 5601:5601
 ```
 
-Puis ouvrez votre navigateur : **http://localhost:5601**
+Puis ouvrez : **http://localhost:5601**
 
+---
 
 ## Configuration initiale de Kibana
 
 ### Première connexion (à faire UNE SEULE FOIS)
 
-1. **Ouvrez Kibana** dans votre navigateur
-2. Cliquez sur le menu en haut à gauche
-3. Allez dans **Management** → **Stack Management**
-4. Dans la section "Kibana", cliquez sur **Index Patterns** (ou **Data Views**)
-5. Cliquez sur **Create index pattern** / **Create data view**
+1. Ouvrez Kibana dans votre navigateur
+2. Menu en haut à gauche → **Management** → **Stack Management**
+3. Section "Kibana" → **Index Patterns** (ou **Data Views**)
+4. Cliquez sur **Create index pattern** / **Create data view**
 
 ### Créer l'Index Pattern
 
 1. **Index pattern name** : `logstash-*`
-   - L'astérisque `*` permet de capturer tous les index (un par jour)
-   - Format : `logstash-2026.02.02`, `logstash-2026.02.03`, etc.
-
+   - Format des index : `logstash-2026.05.22`, `logstash-2026.05.23`, etc.
 2. Cliquez sur **Next step**
-
-3. **Time field** : Sélectionnez `@timestamp`
-
+3. **Time field** : sélectionnez `@timestamp`
 4. Cliquez sur **Create index pattern**
 
-**C'est fait !** plus besoin de refaire cette étape.
+---
 
 ## Utiliser Kibana pour consulter les logs
 
-### Accéder à l'interface Discover
+### Colonnes recommandées dans Discover
 
-1. Menu → **Discover**
-2. Vous voyez maintenant **TOUS les logs de TOUS vos conteneurs !**
+Par défaut Kibana affiche seulement `@timestamp`. Dans **Available fields**, ajoutez :
 
-### Ajouter des colonnes utiles
+- `kubernetes.namespace_name` → Namespace
+- `kubernetes.pod_name` → Nom du pod
+- `kubernetes.container_name` → Nom du conteneur
+- `kubernetes.labels.app` → Label application
+- `log` → Contenu du message
+- `stream` → stdout ou stderr
 
-Par défaut, Kibana affiche seulement `@timestamp`. Ajoutez des colonnes pour mieux voir vos logs :
-
-1. À gauche, dans **Available fields**, cherchez ces champs :
-2. Cliquez sur le **+** à côté de chaque champ pour l'ajouter comme colonne :
-   - `kubernetes.namespace_name` → Namespace
-   - `kubernetes.pod_name` → Nom du pod
-   - `kubernetes.container_name` → Nom du conteneur
-   - `kubernetes.labels.app` → Label application
-   - `log` → **Le contenu du log (message)**
-   - `stream` → stdout ou stderr
-
-## Filtrer et rechercher les logs
-
-### Recherche par namespace
-
-Dans la barre de recherche en haut :
+### Recherches KQL utiles
 
 ```
-kubernetes.namespace_name: "xxxx"
-```
+# Par namespace
+kubernetes.namespace_name: "production"
 
-### Recherche par application
+# Par application
+kubernetes.labels.app: "mon-app"
 
-```
-kubernetes.labels.app: "xxxx"
-```
+# Par pod
+kubernetes.pod_name: "mon-pod-*"
 
-### Recherche par pod spécifique
+# Erreurs uniquement
+log: *error* OR log: *ERROR* OR log: *failed*
 
-```
-kubernetes.pod_name: "xxxx"
-```
-
-### Recherche dans le contenu des logs
-
-```
-# Logs contenant "error" (insensible à la casse)
-log: *error*
-
-# Logs contenant "ERROR" (sensible à la casse)
-log: *ERROR*
-
-# Logs contenant une phrase exacte
-log: *"connection refused"*
-```
-
-### Combiner plusieurs filtres
-
-```
-# Erreurs dans le namespace production
+# Combiner
 kubernetes.namespace_name: "production" AND log: *error*
 
-# Logs d'une app spécifique sans le namespace kube-system
-kubernetes.labels.app: "nginx" AND NOT kubernetes.namespace_name: "kube-system"
+# Exclure kube-system
+NOT kubernetes.namespace_name: "kube-system"
 
-# Logs stderr (erreurs) d'un namespace
+# Logs stderr
 kubernetes.namespace_name: "production" AND stream: "stderr"
 ```
 
-### Exclure des namespaces
+### Exemples pratiques
 
 ```
-# Tout sauf kube-system
-NOT kubernetes.namespace_name: "kube-system"
-
-# Exclure plusieurs namespaces
-NOT kubernetes.namespace_name: ("kube-system" OR "kube-public" OR "logging")
-```
-
-## Exemples pratiques
-
-### Voir les logs d'une application spécifique
-
-```bash
+# Suivre une appli spécifique
 kubernetes.labels.app: "rabbitmq"
-```
 
-### Débugger une erreur
-
-```bash
-log: *error* OR log: *ERROR* OR log: *failed*
-kubernetes.namespace_name: "production" AND (log: *error* OR log: *ERROR*)
-```
-
-### Suivre les connexions
-
-```bash
-log: *connection* OR log: *connected* OR log: *disconnected*
-log: *auth* OR log: *login* OR log: *logout*
-```
-
-### Monitorer un déploiement
-
-Après un déploiement, surveillez :
-
-```bash
-kubernetes.pod_name: "mon-app-v2-*"
+# Débugger après un déploiement
 kubernetes.pod_name: "mon-app-v2-*" AND (log: *error* OR log: *fatal*)
+
+# Surveiller les connexions
+log: *connection* OR log: *connected* OR log: *disconnected*
 ```
+
+---
 
 ## Ressources et documentation
 
@@ -236,40 +222,46 @@ kubernetes.pod_name: "mon-app-v2-*" AND (log: *error* OR log: *fatal*)
 - [Documentation Kibana](https://www.elastic.co/guide/en/kibana/current/index.html)
 - [Kubernetes Logging](https://kubernetes.io/docs/concepts/cluster-administration/logging/)
 
-## Support et aide
+---
 
-### Fichiers inclus dans ce projet
+## Fichiers inclus
 
-- `00-namespace.yaml` - Namespace "logging"
-- `01-elasticsearch.yaml` - Elasticsearch StatefulSet + Service
-- `02-kibana.yaml` - Kibana Deployment + Service
-- `03-fluentd-rbac.yaml` - RBAC pour Fluentd (cluster-wide)
-- `04-fluentd-configmap.yaml` - Configuration Fluentd
-- `05-fluentd-daemonset.yaml` - Fluentd DaemonSet
-- `deploy.sh` - Script de déploiement automatique
-- `uninstall.sh` - Script de désinstallation
-- `README-LOGGING.md` - Ce fichier
+| Fichier | Rôle |
+|---|---|
+| `00-namespace.yaml` | Namespace `logging` |
+| `01-elasticsearch.yaml` | Elasticsearch StatefulSet + Service |
+| `02-kibana.yaml` | Kibana Deployment + Service (limite : 1536Mi) |
+| `03-fluentd-rbac.yaml` | RBAC pour Fluentd (cluster-wide) |
+| `04-fluentd-configmap.yaml` | Configuration Fluentd (exclude_path, timezone) |
+| `05-fluentd-daemonset.yaml` | Fluentd DaemonSet (limite CPU : 500m) |
+| `06-elasticsearch-setup.yaml` | Job ILM — rétention automatique des index |
+| `deploy.sh` | Script de déploiement automatique |
+| `uninstall.sh` | Script de désinstallation |
+| `README-LOGGING.MD` | Ce fichier |
 
-### Commandes utiles
+## Commandes utiles
 
 ```bash
-# Voir tous les pods de logging
+# État de la stack
 kubectl get pods -n logging
+kubectl get all -n logging
 
 # Logs de chaque composant
 kubectl logs -n logging -l app=elasticsearch
 kubectl logs -n logging -l app=kibana
 kubectl logs -n logging -l app=fluentd --tail=50
 
-# État du cluster
-kubectl get all -n logging
+# Consommation ressources
+kubectl top pods -n logging
 
-# Vérifier les index Elasticsearch
-kubectl exec -n logging elasticsearch-0 -- curl -s "http://localhost:9200/_cat/indices?v"
+# Vérifier les index et leur taille
+kubectl exec -n logging elasticsearch-0 -- \
+  curl -s "http://localhost:9200/_cat/indices/logstash-*?v&h=index,docs.count,store.size,ilm.policy"
 
 # Port-forward vers Kibana
 kubectl port-forward -n logging svc/kibana 5601:5601
 
-# Supprimer un vieux index
-kubectl exec -n logging elasticsearch-0 -- curl -X DELETE "http://localhost:9200/logstash-2026.01.01"
+# Santé Elasticsearch
+kubectl exec -n logging elasticsearch-0 -- \
+  curl -s "http://localhost:9200/_cluster/health?pretty"
 ```
