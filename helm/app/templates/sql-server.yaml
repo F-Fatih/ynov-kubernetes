@@ -26,11 +26,25 @@ spec:
       labels:
         app: sql
     spec:
+      {{- if .Values.rbac.create }}
+      serviceAccountName: {{ .Values.serviceAccounts.sql }}
+      automountServiceAccountToken: false
+      {{- end }}
       containers:
       - name: mssql-linux
-        image:  {{ .Values.images.sql }}
+        image: {{ .Values.images.sql }}
         ports:
         - containerPort: 1433
+        env:
+        - name: ACCEPT_EULA
+          value: "Y"
+        - name: SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sql-secret
+              key: SA_PASSWORD
+        - name: MSSQL_PID
+          value: "Express"
         volumeMounts:
         - name: mssql-data
           mountPath: /var/opt/mssql

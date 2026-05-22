@@ -1,0 +1,273 @@
+{{- if .Values.rbac.create }}
+# =============================================================================
+# RBAC — Namespace {{ .Release.Namespace }}
+# Principe : 1 ServiceAccount par microservice, moindre privilège
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. SERVICE ACCOUNTS
+# -----------------------------------------------------------------------------
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccounts.applicantsApi }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: applicants-api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccounts.identityApi }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: identity-api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccounts.jobsApi }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: jobs-api
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccounts.web }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: web
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccounts.rabbitmq }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: rabbitmq
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccounts.sql }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: sql
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccounts.redis }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: redis
+
+# -----------------------------------------------------------------------------
+# 2. ROLES (namespaced — moindre privilège)
+# -----------------------------------------------------------------------------
+
+# Rôle partagé par les 3 APIs métier
+# Besoin : lire ConfigMaps et Secrets de leur namespace
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: api-role
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+
+# Rôle web : lecture configmaps uniquement
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: web-role
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+---
+
+# Rôle RabbitMQ : accès restreint à son seul ConfigMap + endpoints (clustering)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: rabbitmq-role
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  resourceNames: ["rabbitmq-config"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["endpoints"]
+  verbs: ["get", "list", "watch"]
+---
+
+# Rôle SQL : accès restreint à son seul PVC et son Secret
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: sql-role
+  namespace: {{ .Release.Namespace }}
+rules:
+- apiGroups: [""]
+  resources: ["persistentvolumeclaims"]
+  resourceNames: ["sql-pvc"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["sql-secret"]
+  verbs: ["get"]
+---
+
+# Rôle Redis : vide — Redis n'a aucun besoin d'accès à l'API K8s
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: redis-role
+  namespace: {{ .Release.Namespace }}
+rules: []
+
+# -----------------------------------------------------------------------------
+# 3. ROLE BINDINGS
+# -----------------------------------------------------------------------------
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: applicants-api-rb
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccounts.applicantsApi }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: api-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: identity-api-rb
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccounts.identityApi }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: api-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jobs-api-rb
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccounts.jobsApi }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: api-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: web-rb
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccounts.web }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: web-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rabbitmq-rb
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccounts.rabbitmq }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: rabbitmq-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sql-rb
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccounts.sql }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: sql-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: redis-rb
+  namespace: {{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccounts.redis }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: redis-role
+  apiGroup: rbac.authorization.k8s.io
+
+# -----------------------------------------------------------------------------
+# 4. CLUSTER ROLE + BINDING (lecture ingress uniquement)
+# -----------------------------------------------------------------------------
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ingress-reader-{{ .Release.Namespace }}
+rules:
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingressclasses"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: web-ingress-reader-{{ .Release.Namespace }}
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.serviceAccounts.web }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: ingress-reader-{{ .Release.Namespace }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}

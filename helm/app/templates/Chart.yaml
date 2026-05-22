@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ynov-kubernetes
+description: DotNetGigs - Chart Helm pour le namespace chomage
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

@@ -13,6 +13,10 @@ spec:
       labels:
         app: applicants-api
     spec:
+      {{- if .Values.rbac.create }}
+      serviceAccountName: {{ .Values.serviceAccounts.applicantsApi }}
+      automountServiceAccountToken: true
+      {{- end }}
       restartPolicy: Always
       affinity:
         podAffinity:
@@ -28,7 +32,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
       - name: applicants-api
-        image:  {{ .Values.images.applicantsApi }}
+        image: {{ .Values.images.applicantsApi }}
         ports:
         - containerPort: 80
         env:

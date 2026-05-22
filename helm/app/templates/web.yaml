@@ -13,6 +13,10 @@ spec:
       labels:
         app: web
     spec:
+      {{- if .Values.rbac.create }}
+      serviceAccountName: {{ .Values.serviceAccounts.web }}
+      automountServiceAccountToken: true
+      {{- end }}
       restartPolicy: Always
       affinity:
         podAffinity:
@@ -29,7 +33,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
       - name: web
-        image:  {{ .Values.images.web }}
+        image: {{ .Values.images.web }}
         ports:
         - containerPort: 80
         resources:

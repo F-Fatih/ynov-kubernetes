@@ -13,9 +13,13 @@ spec:
       labels:
         app: redis
     spec:
+      {{- if .Values.rbac.create }}
+      serviceAccountName: {{ .Values.serviceAccounts.redis }}
+      automountServiceAccountToken: false
+      {{- end }}
       containers:
       - name: redis
-        image:  {{ .Values.images.redis }}
+        image: {{ .Values.images.redis }}
         ports:
         - containerPort: 6379
 ---

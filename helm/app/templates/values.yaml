@@ -1,0 +1,38 @@
+# =============================================================================
+# values.yaml — DotNetGigs Helm Chart
+# =============================================================================
+
+# -- Images Docker ------------------------------------------------------------
+images:
+  applicantsApi: dotnetgigs/applicants.api:latest
+  identityApi:   dotnetgigs/identity.api:latest
+  jobsApi:       dotnetgigs/jobs.api:latest
+  web:           dotnetgigs/web:latest
+  rabbitmq:      rabbitmq:3-management
+  sql:           mcr.microsoft.com/mssql/server:2019-latest
+  redis:         redis:alpine
+
+# -- Ingress ------------------------------------------------------------------
+ingress:
+  className: nginx
+  webHost:          web.chomage.local
+  webTlsSecret:     web-tls
+  rabbitmqHost:     rabbitmq.chomage.local
+  rabbitmqTlsSecret: rabbitmq-tls
+
+# -- SQL Server ---------------------------------------------------------------
+sql:
+  saPassword: "Pass@word"   # injecté dans sql-secret, ne pas mettre en clair en prod
+
+# -- RBAC ---------------------------------------------------------------------
+rbac:
+  create: true   # mettre false pour désactiver toute la couche RBAC
+
+serviceAccounts:
+  applicantsApi: applicants-api-sa
+  identityApi:   identity-api-sa
+  jobsApi:       jobs-api-sa
+  web:           web-sa
+  rabbitmq:      rabbitmq-sa
+  sql:           sql-sa
+  redis:         redis-sa

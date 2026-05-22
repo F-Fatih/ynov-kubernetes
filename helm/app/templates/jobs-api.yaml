@@ -13,6 +13,10 @@ spec:
       labels:
         app: jobs-api
     spec:
+      {{- if .Values.rbac.create }}
+      serviceAccountName: {{ .Values.serviceAccounts.jobsApi }}
+      automountServiceAccountToken: true
+      {{- end }}
       restartPolicy: Always
       affinity:
         podAffinity:
@@ -28,7 +32,7 @@ spec:
               topologyKey: kubernetes.io/hostname
       containers:
       - name: jobs-api
-        image:  {{ .Values.images.jobsApi }}
+        image: {{ .Values.images.jobsApi }}
         ports:
         - containerPort: 80
         env:
