@@ -179,6 +179,8 @@ kubectl apply -f k8s\monitoring
 Accès Prometheus : http://localhost:30090/
 Accès Grafana :http://localhost:30300/   ( Login: admin / admin )
 
+### Logging : Voir dossier logging
+
 
 ### Workflow express
 - Build + push toutes les images (section ci-dessus)
