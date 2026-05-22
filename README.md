@@ -45,7 +45,7 @@ docker tag web:1.0 ffatih/web:1.0
 docker push ffatih/web:1.0
 ```
 
-### Déploiement Kubernetes
+### Déploiement Kubernetes /!\ L'install VIA Helm est disponible !!! /!\
 1) Créer le namespace :
 ```bash
 kubectl apply -f k8s\namespace-chomage.yaml
@@ -108,7 +108,7 @@ kubectl create secret tls rabbitmq-home-tls --cert=https/rabbitmq/rabbitmq.home.
 5) URL d'accès :
 ```bash
 https://web.home
-https://rabbitmq.home
+https://rabbitmq.home (login : guest / guest)
 ```
 
 ### Scaling pods
