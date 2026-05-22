@@ -81,6 +81,13 @@ kubectl wait --for=condition=ready pod -l app=elasticsearch -n logging --timeout
 }
 echo -e "${GREEN}✓${NC} Elasticsearch est prêt"
 
+# Configurer ILM (rétention automatique des logs)
+echo ""
+echo "Configuration ILM Elasticsearch (rétention 2 jours)..."
+kubectl delete job elasticsearch-setup -n logging --ignore-not-found=true
+kubectl apply -f 06-elasticsearch-setup.yaml
+echo -e "${GREEN}✓${NC} Job ILM lancé (s'exécute en arrière-plan)"
+
 # Attendre Kibana
 echo ""
 echo "Attente de Kibana..."
